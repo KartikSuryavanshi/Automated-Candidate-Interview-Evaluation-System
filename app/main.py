@@ -1,10 +1,12 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.staticfiles import StaticFiles
 from app.interviewer_agent import InterviewerAgent
 from app.candidate_proxy import CandidateProxy
 from app.evaluator_agent import EvaluatorAgent
 import asyncio
 from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
+import os
 
 app = FastAPI()
 
@@ -14,9 +16,11 @@ interviewer = InterviewerAgent()
 candidate = CandidateProxy()
 evaluator = EvaluatorAgent()
 
+templates = Jinja2Templates(directory="app/static")
+
 @app.get("/")
-def read_root():
-    return {"message": "ARIES Automated Candidate Interview & Evaluation System is running."}
+def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.websocket("/ws/interview")
 async def interview_websocket(websocket: WebSocket):
