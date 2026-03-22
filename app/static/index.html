@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ARIES Interview Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        #log { border: 1px solid #ccc; padding: 1em; height: 300px; overflow-y: auto; margin-bottom: 1em; }
+        #topic { width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>ARIES Automated Interview Demo</h1>
+    <div>
+        <input id="topic" type="text" placeholder="Interview topic (e.g. Python)" />
+        <button onclick="startInterview()">Start Interview</button>
+    </div>
+    <div id="log"></div>
+    <script>
+        let ws;
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += msg + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        function startInterview() {
+            const topic = document.getElementById('topic').value || 'Python';
+            ws = new WebSocket(`ws://${location.host}/ws/interview`);
+            ws.onopen = () => {
+                log('<b>Interview started.</b>');
+                ws.send(JSON.stringify({topic}));
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                log(`<b>${data.role}:</b> ${data.message}`);
+                // Automatically continue the loop for demo
+                setTimeout(() => ws.send(JSON.stringify({topic})), 2000);
+            };
+            ws.onclose = () => log('<b>Interview ended.</b>');
+        }
+    </script>
+</body>
+</html>
