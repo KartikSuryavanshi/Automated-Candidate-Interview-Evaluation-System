@@ -7,6 +7,7 @@
         body { font-family: Arial, sans-serif; margin: 2em; }
         #log { border: 1px solid #ccc; padding: 1em; height: 300px; overflow-y: auto; margin-bottom: 1em; }
         #topic { width: 200px; }
+        #next, #stop { margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -14,10 +15,13 @@
     <div>
         <input id="topic" type="text" placeholder="Interview topic (e.g. Python)" />
         <button onclick="startInterview()">Start Interview</button>
+        <button id="next" onclick="nextRound()" disabled>Next</button>
+        <button id="stop" onclick="stopInterview()" disabled>Stop</button>
     </div>
     <div id="log"></div>
     <script>
         let ws;
+        let running = false;
         function log(msg) {
             const logDiv = document.getElementById('log');
             logDiv.innerHTML += msg + '<br>';
@@ -28,15 +32,41 @@
             ws = new WebSocket(`ws://${location.host}/ws/interview`);
             ws.onopen = () => {
                 log('<b>Interview started.</b>');
+                running = true;
+                document.getElementById('next').disabled = false;
+                document.getElementById('stop').disabled = false;
                 ws.send(JSON.stringify({topic}));
             };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 log(`<b>${data.role}:</b> ${data.message}`);
-                // Automatically continue the loop for demo
-                setTimeout(() => ws.send(JSON.stringify({topic})), 2000);
+                if (data.final) {
+                    running = false;
+                    document.getElementById('next').disabled = true;
+                    document.getElementById('stop').disabled = true;
+                    log('<b>Interview ended.</b>');
+                }
             };
-            ws.onclose = () => log('<b>Interview ended.</b>');
+            ws.onclose = () => {
+                if (running) log('<b>Interview ended.</b>');
+                running = false;
+                document.getElementById('next').disabled = true;
+                document.getElementById('stop').disabled = true;
+            };
+        }
+        function nextRound() {
+            if (ws && running) {
+                const topic = document.getElementById('topic').value || 'Python';
+                ws.send(JSON.stringify({topic}));
+            }
+        }
+        function stopInterview() {
+            if (ws && running) {
+                ws.send(JSON.stringify({action: 'stop'}));
+                running = false;
+                document.getElementById('next').disabled = true;
+                document.getElementById('stop').disabled = true;
+            }
         }
     </script>
 </body>
