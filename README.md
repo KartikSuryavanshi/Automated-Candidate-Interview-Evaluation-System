@@ -31,5 +31,3 @@ This repository contains the ARIES project: an Automated Candidate Interview & E
 - `requirements.txt` - Python dependencies
 - `README.md` - Project overview and setup
 
-## License
-MIT
